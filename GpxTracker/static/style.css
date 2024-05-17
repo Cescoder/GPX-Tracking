@@ -1,0 +1,17 @@
+body{
+    font-family: 'Courier New', Courier, monospace;
+    text-align: center;
+    align-items: center;
+}
+
+#pulsante {
+    font-family: 'Courier New', Courier, monospace;
+    width: 150px;
+    height: 150px;
+    border-radius: 100px;
+}
+
+div{
+    border: double;
+    margin: 20px;
+}

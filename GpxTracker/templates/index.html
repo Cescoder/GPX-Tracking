@@ -1,0 +1,30 @@
+<html>
+    <head>
+        <title>Gpx Tracker</title>
+
+        <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='style.css') }}">
+    </head>
+
+    <body>
+        
+        <h1>Gpx Tracker</h1>
+
+        <p>Gpx Tracker is a useful web app to track your position and build a gpx file!</p>
+        
+        <div>
+            <h2>Time</h2>
+            <h3 id = 'timeString'>00:00:00</h3>
+        </div>
+
+        <div>
+            <h2>GPS Position</h2>
+            <strong><label>Latitude:</label></strong><span id = 'latitude'></span><br>
+            <strong><label>Longitude:</label></strong><span id = 'longitude'></span><br><br>
+        </div>
+
+
+        <button id='pulsante' onclick='buttonClick()' >START</button>
+
+        <script src="{{ url_for('static', filename='script.js') }}"></script>
+    </body>
+</html>

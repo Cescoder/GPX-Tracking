@@ -1,48 +1,69 @@
+#LIBRARIES
 from fastapi import FastAPI, Body
 from fastapi.middleware.cors import CORSMiddleware
-from typing import List, Tuple
-from pydantic import BaseModel
-import gpxpy.gpx
 from fastapi.responses import FileResponse
-app = FastAPI()
+from fastapi.staticfiles import StaticFiles
+import gpxpy.gpx
+import os
+import uuid
+import hashlib
+import datetime
 
-class Coordinates(BaseModel):
-    latitude: float
-    longitude: float
+#CONSTS
+HOST = '127.0.0.1'
+PORT = 8000
 
-class PositionList(BaseModel):
-    positions: List[Coordinates]
+#APP OBJECT
+app = FastAPI(title='GPX API')
 
-# Configure CORS settings
+#MIDDLEWARE SETTINGS
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # Set this to the appropriate origins or use ["http://localhost"] for development
+    allow_origins=["*"],
     allow_credentials=True,
-    allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],  # Add OPTIONS to the allowed methods
+    allow_methods=["*"],
     allow_headers=["*"],
 )
 
+#ROUTES
 @app.post("/upload")
-async def upload_positions(obj: dict = Body(...)):#position_list: PositionList):
-    print(obj)
+async def upload_positions(obj: dict = Body(...)):
+    #getting data
     positions = obj["positions"]
-    #now make gpx file with these coordinates
     
+    #writing gpx xml
     gpx = gpxpy.gpx.GPX()
-    for position in positions:
-        gpx.waypoints.append(gpxpy.gpx.GPXWaypoint(position[0], position[1]))
-    print(gpx.to_xml())
 
-    with open("output.gpx", "w") as f:
-        f.write(gpx.to_xml())
+    for position in positions:
+        waypoint = gpxpy.gpx.GPXWaypoint(latitude=position["latitude"],longitude= position['longitude'])
+        gpx.waypoints.append(waypoint)
     
-    #TODO: return the file
+    gpx_xml = gpx.to_xml()
+
+    # Generate unique filename
+    unique_id = uuid.uuid4().hex
+    hash_object = hashlib.sha256(unique_id.encode())
+    unique_filename = f"{hash_object.hexdigest()}.gpx"
+    file_path = f'generated_files/{unique_filename}'
+
+    # Writing file in the folder
+    os.makedirs(os.path.dirname(file_path), exist_ok=True)
+    with open(file_path, "w") as f:
+        f.write(gpx_xml)
     
-    return {"message": "OK"}
+    # Message Responde
+    return {"message": "OK", "filename": unique_filename}
+
+@app.get("/download/{filename}")
+async def download_file(filename: str):
+    file_path = f'generated_files/{filename}'
+    
+    if os.path.exists(file_path):
+        return FileResponse(file_path)
+    else:
+        return {"error": "File not found"}
+
 
 if __name__ == "__main__":
     import uvicorn
-    uvicorn.run(app, host="0.0.0.0", port=8000)
-
-
-
+    uvicorn.run(app, host=HOST, port=PORT)

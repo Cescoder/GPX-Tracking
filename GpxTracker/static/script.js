@@ -9,6 +9,7 @@ var seconds = 0;
 var minutes = 0;
 var hours   = 0;
 const positionList = [];
+download_file_name = ''
 
 function buttonClick() {
     startMode = !startMode;
@@ -18,6 +19,7 @@ function buttonClick() {
         clearInterval(timerInterval);
         reset();
     } else {
+        document.getElementById("download-button").style.display = "none"
         pulsante.innerHTML = "STOP";
         timerInterval = setInterval(startTime, 1000); // Aggiorniamo il tempo ogni secondo
     }
@@ -37,16 +39,23 @@ function startTime() {
         navigator.geolocation.getCurrentPosition(position => {
             const latitude = position.coords.latitude;
             const longitude = position.coords.longitude;
-        
+            /*const altitude = position.coords.altitude;
+            console.log("altitude" + altitude)
+            const timestamp = new Date(position.timestamp);
+            console.log("Time stamp" + timestamp)*/
 
-        // Update HTML elements with the coordinates and altitude
+             /* Ottieni l'ora e la data formattate
+             const hours = timestamp.getHours().toString().padStart(2, '0');
+             const minutes = timestamp.getMinutes().toString().padStart(2, '0');
+             const seconds = timestamp.getSeconds().toString().padStart(2, '0');
+            */
+
+             // Update HTML elements with the coordinates and altitude
             latitudeTag.innerHTML = latitude;
             longitudeTag.innerHTML = longitude;
 
-            //TODO: AGGIUNGERE ANCHE L'ORA E LA DATA
-            //TODO: AGGIUNGERE ANCHE L'ALTITUDINE
             
-            positionList.push([latitude, longitude])
+            positionList.push({ latitude, longitude/*, altitude, timestamp */});
         });
     }
     
@@ -86,15 +95,31 @@ function sendPositionListToServer() {
         body: jsonData
     };
 
-    url = 'http://127.0.0.1:8000/upload'
-    // Esegui la richiesta POST al fastAPI
-    fetch(url, requestOptions) // Correzione: aggiungi il protocollo
-        .then(response => response.json())
+    // Execute the POST request to the FastAPI server
+    fetch('http://127.0.0.1:8000/upload', requestOptions)
+        .then(response => {
+            if (!response.ok) {
+                throw new Error('Errore nella richiesta al server');
+            }
+            return response.json();
+        })
         .then(data => {
-            console.log(data);
+            download_file_name = data.filename
+            document.getElementById("download-button").style.display = "inline"
         })
         .catch(error => {
-            console.error('Error:', error);
+            console.error('Errore durante la richiesta al server:', error);
         });
 
+
 }
+
+document.getElementById('download-button').addEventListener('click', async () => {
+
+    const link = document.createElement('a');
+    link.href = `http://127.0.0.1:8000/download/${download_file_name}`;
+    link.download = download_file_name;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+});

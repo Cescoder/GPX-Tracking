@@ -15,3 +15,7 @@ div{
     border: double;
     margin: 20px;
 }
+
+#download-button{
+    display: none;
+}
